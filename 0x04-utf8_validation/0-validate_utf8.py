@@ -1,38 +1,52 @@
 #!/usr/bin/python3
+"""
+Define validUTF8(data) function that validates whether a
+string of ints represents a valid UTF-8 encoding.
+"""
+from itertools import takewhile
+
+
+def int_to_bits(nums):
+    """
+    Helper function
+    Convert ints to bits
+    """
+    for num in nums:
+        bits = []
+        mask = 1 << 8  # cause we have 8 bits per byte. adds up to (11111111)
+        while mask:
+            mask >>= 1
+            bits.append(bool(num & mask))
+        yield bits
+
 
 def validUTF8(data):
-    # Number of bytes to process in the current UTF-8 character
-    bytes_to_process = 0
+    """
+    Takes a list of ints and returns true if the list is
+    a valid UTF-8 encoding, else returns false
+    Args:
+        data : List of ints representing possible UTF-8 encoding
+    Return:
+        bool : True or False
+    """
+    bits = int_to_bits(data)
+    for byte in bits:
+        # if single byte char, then valid. continue
+        if byte[0] == 0:
+            continue
 
-    # Masks for checking byte patterns
-    mask1 = 1 << 7  # 10000000
-    mask2 = 1 << 6  # 01000000
+        # if here, byte is multi-byte char
+        ones = sum(takewhile(bool, byte))
+        if ones <= 1:
+            return False
+        if ones >= 4:  # UTF-8 can be 1 to 4 bytes long
+            return False
 
-    for num in data:
-        # Mask to get only the last 8 bits
-        byte = num & 0xFF
-        
-        if bytes_to_process == 0:
-            # Determine the number of bytes in the UTF-8 character
-            mask = 1 << 7
-            while mask & byte:
-                bytes_to_process += 1
-                mask >>= 1
-            
-            # For 1 byte, it should be 0xxxxxxx
-            if bytes_to_process == 0:
-                continue
-            
-            # UTF-8 characters are between 2 and 4 bytes, otherwise invalid
-            if bytes_to_process == 1 or bytes_to_process > 4:
+        for _ in range(ones - 1):
+            try:
+                byte = next(bits)
+            except StopIteration:
                 return False
-        else:
-            # The following bytes should be of the form 10xxxxxx
-            if not (byte & mask1 and not (byte & mask2)):
+            if byte[0:2] != [1, 0]:
                 return False
-
-        # Decrement the bytes left to process
-        bytes_to_process -= 1
-
-    # If we have processed all bytes successfully
-    return bytes_to_process == 0
+    return True
