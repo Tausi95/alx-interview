@@ -1,23 +1,43 @@
 #!/usr/bin/python3
+"""
+Making Change
+"""
+
 
 def makeChange(coins, total):
-    """Return the fewest number of coins needed to meet the total."""
-    
-    # If total is 0 or less, no coins are needed
+    """
+    Return the minimum number of coins needed to meet a given total
+    Args:
+        coins (list of ints): a list of coins of different values
+        total (int): total value to be met
+    Return:
+        Number of coins or -1 if meeting the total is not possible
+    """
     if total <= 0:
         return 0
-    
-    # Initialize the DP array with infinity
-    dp = [float('inf')] * (total + 1)
-    
-    # Base case: 0 coins are needed to make the total of 0
-    dp[0] = 0
-    
-    # Iterate over each coin
-    for coin in coins:
-        # Update the DP array for each amount from the coin value to total
-        for i in range(coin, total + 1):
-            dp[i] = min(dp[i], dp[i - coin] + 1)
-    
-    # If dp[total] is still infinity, return -1 (total cannot be met)
-    return dp[total] if dp[total] != float('inf') else -1
+    if coins == [] or coins is None:
+        return -1
+    try:
+        n = coins.index(total)
+        return 1
+    except ValueError:
+        pass
+
+    coins.sort(reverse=True)
+    coin_count = 0
+    for i in coins:
+        if total % i == 0:
+            coin_count += int(total / i)
+            return coin_count
+        if total - i >= 0:
+            if int(total / i) > 1:
+                coin_count += int(total / i)
+                total = total % i
+            else:
+                coin_count += 1
+                total -= i
+                if total == 0:
+                    break
+    if total > 0:
+        return -1
+    return coin_count
